@@ -1,5 +1,5 @@
 ;**********************************************************************************
-;
+; lib
 ; Gdip_ImageSearch()
 ; by MasterFocus - 02/APRIL/2013 00:30h BRT
 ; Thanks to guest3456 for helping me ponder some ideas
