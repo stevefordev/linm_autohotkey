@@ -1,4 +1,4 @@
-﻿; linm automation library v1.0.0 by steve park 2017-10-08
+﻿; linm automation library v1.0.2 by steve park 2017-10-08
 ;
 ;#####################################################################################
 ;#####################################################################################
@@ -38,19 +38,34 @@ Global ddlTitle := ""
 Global currentProcessTitle := ""
 Global currentProcessId := ""
 
-Gui, Add, Button, x20 y15 w110 h20, Start
-Gui, Add, Button, x140 y15 w110 h20, Stop
-Gui, Add, Button, x260 y15 w110 h20, Quit
-Gui, Add, GroupBox, x5 y45 w395 h300, Settings
-Gui, Add, CheckBox, x15 y65 w210 h20 vCheckBox1, Auto Return Home(PK)
-Gui, Add, CheckBox, x15 y85 w210 h20 vCheckBox2, Auto Refill Potion
+Gui, Add, Button, x5 y15 w110 h20, Start
+Gui, Add, Button, x125 y15 w110 h20, Stop
+Gui, Add, Button, x245 y15 w110 h20, Quit
+GUI, Add, Picture, x365 y15 gPicProc, %A_ScriptDir%/img/ico.jpg
+Gui, Add, GroupBox, x5 y45 w380 h338, Settings
 
-;Gui, Add, DropDownList,x20 y115 w220 h150 vDrop gDropAction, A|B|C 
+Gui, Add, CheckBox, x15 y65 w210 h20 vCheckBoxPK, Detect PK
+Gui, Add, CheckBox, x15 y90 w210 h20 vCheckBoxHP, Detect HP Potion 
+Gui, Add, CheckBox, x15 y115 w210 h20 vCheckBoxPosion, Detect Poison
+
+Gui, Font, cRed
+Gui, Add, Text, x15 y145, ===== Choose your process =====
+
 CreateDDLRunningProcess()
-Gui, Add, DropDownList,x20 y115 w360 h800 choose1 vWinTitle gWinTitleAction, %ddlTitle%
-Gui, Add, ListBox, x20 y160 w360 h100 vListBoxLog
+Gui, Add, DropDownList,x15 y170 w360 h600 choose1 vWinTitle gWinTitleAction, %ddlTitle%
 
-Gui, Show, w600 h400, linm_v1.0.0
+Gui, Font, cBlack
+Gui, Add, Text, x15 y205 vTextColorBlack, ===== Log =====
+GuiControl, Font, TextColorBlack
+
+Gui, Add, ListBox, x15 y225 w360 h148 vListBoxLog
+
+Gui, Add, GroupBox, x390 y45 w205 h338, TEST
+Gui, Add, Button, x400 y70 w95 h20, RandomMove
+Gui, Add, Button, x400 y100 w95 h20, SlotNum1
+Gui, Add, Button, x400 y130 w95 h20, SlotNum8
+
+Gui, Show, w600 h400, linm_v1.0.2
  
 return
 
@@ -66,6 +81,8 @@ WriteLog(logData)
 LogShow(logData) {
 	formattime, nowtime,,yyyy-MM-dd HH:mm:ss
 	guicontrol, , ListBoxLog, [%nowtime%]  %logData% . ||
+    
+    
     return
 }
 
@@ -95,8 +112,34 @@ Fnc_DetectPK()
    return
 }
 
+;PK 감지
 DetectPK() 
 {
+   if (gdipService.GdipImageSearch("img/pk.png"))
+   {  
+      gdipService.Capture("pk")
+       
+      GetDirection(xPosition, yPosition)   
+      loop 5
+      {   
+         ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2
+         Sleep 1000
+      }
+      
+      WriteLog("detected pk and click:" . xPosition . "_" . yPosition)
+      
+      GetSlotPosition(8, xPo, yPo)
+      ControlClick, x%xPo% y%yPo%, ahk_id %currentProcessId%, , Left, 2 
+      
+      WriteLog("detected pk and go home:" . xPo . "_" . yPo)
+      Sleep, 200
+      gosub, ButtonStop
+   } 
+   else 
+   {
+      WriteLog("pk check OK")
+      Sleep, 200
+   }
    return
 }
 
@@ -105,17 +148,20 @@ DetectPoisonRock()
 {  
    if (gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
-      gdipService.Capture("pk")
-       
-      GetSkillPosition(1, xPosition, yPosition)
-      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, ,Left,2 
-      Sleep, 500
-      WriteLog("detected poison and click:" . randx . "_" . randy)
+      ;gdipService.Capture("posion")
+      
+      Sleep, 2000      
+      GetSlotPosition(1, xPosition, yPosition)
+      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2 
+      
+      WriteLog("detected poison : click " . xPosition . "_" . yPosition)
    } 
    else 
    {
-      WriteLog("no poison")
+      WriteLog("poison check OK")
+      
    }
+   Sleep, 200
    return
 }
 
@@ -124,18 +170,20 @@ DetectEmptyPotionHP()
 {        
    if(gdipService.GdipImageSearch("img/empty_potion_hp.png"))
    {  
-      gdipService.Capture("empty_potion_hp")
-   
-      GetSkillPosition(8, xPosition, yPosition)
-      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, ,Left,2 
+      ;gdipService.Capture("empty_potion_hp")
       
-      WriteLog("detected all in HP Potion:" . randx . "_" . randy)
-      Sleep, 500
+      Sleep, 2000      
+      GetSlotPosition(8, xPosition, yPosition)
+      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2 
+      
+      WriteLog("detected allin HP potion : click" . xPosition . "_" . yPosition)
+      Sleep, 200
       gosub, ButtonStop
    }
    else
    {
       WriteLog("enough potion HP")
+      Sleep, 200
    }
    return
 }
@@ -171,21 +219,28 @@ ButtonStart:
   Fnc_Init()
   
   isStart := true
-  
+  loopCount := 0
   While isStart=true
   {
+      loopCount = loopCount + 1
       gdipService := new GdipService
       gdipService.Init()
-      gdipService.SetWinTitle("NoxPlayerLin")
+      gdipService.SetWinTitle(currentProcessTitle)
       currentProcessId := gdipService.GetHwnd()
       gdipService.GetBmpHaystack()
       
       ;Fnc_DetectPK()  
       ;Fnc_DetectAllin()
+      DetectPK()
       DetectEmptyPotionHP()
       DetectPoisonRock()
 
       gdipService.ShutDownGdipToken()
+      
+      if(loopCount = 100) 
+      {
+         GuiControl, , ListBoxLog, |
+      }
       Sleep, 2000
   }
    return  
@@ -208,6 +263,41 @@ ButtonQuit:
   return
 }
 
+ButtonRandomMove:
+{
+   GetDirection(xPosition, yPosition)   
+   loop 5
+   {   
+      ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
+      Sleep 1000
+   }
+   
+   Sleep 500
+   return
+}
+
+ButtonSlotNum1:
+{
+   Sleep 500
+   
+   GetSlotPosition(1, xPosition, yPosition)
+   ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
+   
+   Sleep 500
+   return
+}
+
+ButtonSlotNum8:
+{
+   Sleep 500
+   
+   GetSlotPosition(8, xPosition, yPosition)
+   ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
+   
+   Sleep 500
+   return
+}
+
 DropAction:
 {
    gui, submit, nohide
@@ -223,19 +313,55 @@ DropAction:
 
 WinTitleAction:
 {
+   ;Settitlematchmode, 2
    gui, submit, nohide
    currentProcessTitle = %WinTitle%
    
    WinActivate, %WinTitle%
+   Sleep, 200
+   ;WinMove, %WinTitle%, , , , , 808
    WriteLog("pick process : " . currentProcessTitle)   
    ;"detected poison and click:" . randx . "_" . randy
    return 
+}
+
+PicProc:
+{
+   Run, https://github.com/stevefordev/linm_autohotkey
+   WriteLog("PicProc")   
+   return
 }
 
 
 ;###########################################################################################
 ; 단일 테스트
 ;###########################################################################################
+^1::
+{
+   GuiControl, , ListBoxLog, |
+   return
+}
+
+^2::
+{
+   ;gdipService.Capture("test")
+   ;RandomMoveBySend(currentProcessTitle)
+   WriteLog(currentProcessTitle)  
+   Sleep, 1000   
+   WinGetClass, this_class, %currentProcessTitle%
+   
+   GetDirection(xPosition, yPosition)
+   
+   loop 5
+   {   
+      ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
+      Sleep 1000
+   }
+   
+   Sleep 500
+   return
+}
+
 ^3::
 {
 	WinGet, id, list
@@ -253,7 +379,7 @@ WinTitleAction:
 
 ^4::
 {   
-   GetSkillPosition(1, xPosition, yPosition)
+   GetSlotPosition(8,xPosition, yPosition)
    
    ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, ,Left,2 
    WriteLog(currentProcessId . " : " . xPosition . "_" . yPosition)

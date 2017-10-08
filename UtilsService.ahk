@@ -1,4 +1,4 @@
-GetSkillPosition(value, ByRef xPosition, ByRef yPosition)
+GetSlotPosition(value, ByRef xPosition, ByRef yPosition)
 {	
 	;GoTo % IsLabel("Case-" value) ? "Case-" value : "Case-Default"
 	;availableRange = 0
@@ -36,42 +36,37 @@ GetSkillPosition(value, ByRef xPosition, ByRef yPosition)
 	Return
 }
 
-;get direction(the four cardinal points) randomly
-GetRandomDirection()
+GetRandomNumber()
 {
  Random, rand, 1, 4
  return rand
 }
 
-RandomMoveBySend(ahkId)
+GetDirection(ByRef xPosition, ByRef yPosition)
 {
-	nVar := GetRandomDirection()
-	MsgBox % nVar ahkId
+	value := GetRandomNumber()
+	if value = 1
+	{
+		Random, randx, 425-20, 425+20
+		Random, randy, 240-20, 240+20
+	}
+	else if value = 2
+	{
+		Random, randx, 850-20, 850+20
+		Random, randy, 240-20, 240+20
+	}
+	else if value = 3
+	{
+		Random, randx, 850-20, 850+20
+		Random, randy, 480-20, 480+20
+	}
+	else
+	{
+		Random, randx, 425-20, 425+20
+		Random, randy, 480-20, 480+20
+	}
 	
-	nVar=1
-  if nVar = 1
-  {
-	ControlSend, {w down}, NoxPlayerLin
-	sleep 5000
-	ControlSend, [w up}, NoxPlayerLin
-  }
-  else if nVar = 2
-  {
-	ControlSend, {a down}, ahk_id %ahkId%
-     sleep 5000
-	ControlSend, [a up}, ahk_id %ahkId%
-  }
-  else if nVar = 2
-  {
-	ControlSend, {s down}, ahk_id %ahkId%
-     sleep 5000
-	ControlSend, [s up}, ahk_id %ahkId%
-  }
-  else if nVar = 2
-  {
-	ControlSend, {d down}, ahk_id %ahkId%
-     sleep 5000
-	ControlSend, [d up}, ahk_id %ahkId%
-  }
-  return
+	xPosition = %randx%
+	yPosition = %randy%
+	return
 }
