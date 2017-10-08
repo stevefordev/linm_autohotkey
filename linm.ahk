@@ -13,7 +13,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #Include Gdip.ahk
 #Include Gdip_ImageSearch.ahk 
 #Include GdipService.ahk
-;#Include UtilsService.ahk 
+#Include UtilsService.ahk 
 
 ; 5 : 785 670
 ; 5 : 785 670
@@ -35,7 +35,8 @@ Global firstHit_reaction_sec := 3000
 Global directions := ["w", "a", "s", "d"]
 
 Global ddlTitle := ""
-Global currentProcess := ""  
+Global currentProcessTitle := ""
+Global currentProcessId := ""
 
 Gui, Add, Button, x20 y15 w110 h20, Start
 Gui, Add, Button, x140 y15 w110 h20, Stop
@@ -46,7 +47,7 @@ Gui, Add, CheckBox, x15 y85 w210 h20 vCheckBox2, Auto Refill Potion
 
 ;Gui, Add, DropDownList,x20 y115 w220 h150 vDrop gDropAction, A|B|C 
 CreateDDLRunningProcess()
-Gui, Add, DropDownList,x20 y115 w360 h800 vWinTitle gWinTitleAction, %ddlTitle%
+Gui, Add, DropDownList,x20 y115 w360 h800 choose1 vWinTitle gWinTitleAction, %ddlTitle%
 Gui, Add, ListBox, x20 y160 w360 h100 vListBoxLog
 
 Gui, Show, w600 h400, linm_v1.0.0
@@ -64,7 +65,7 @@ WriteLog(logData)
 
 LogShow(logData) {
 	formattime, nowtime,,yyyy-MM-dd HH:mm:ss
-	guicontrol, , ListBoxLog, %nowtime% : %logData% . ||
+	guicontrol, , ListBoxLog, [%nowtime%]  %logData% . ||
     return
 }
 
@@ -72,7 +73,7 @@ LogWriteFile(logData) {
    FileCreateDir, log
    Global log_dir 
    formattime, nowtime,,yyyy-MM-dd HH:mm:ss
-   FileAppend, %nowtime% : %logData%`n, %log_dir%	
+   FileAppend, [%nowtime%]  %logData%`n, %log_dir%	
    return
 }
 ;#end logging
@@ -105,13 +106,10 @@ DetectPoisonRock()
    if (gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
       gdipService.Capture("pk")
-      
-      Random, randy, 640, 680
-      Random, randx, 545-15, 545+15
-      
-      hwnd := gdipService.GetHwnd()
-         
-      ControlClick, x%randx% y%randy%, ahk_id %hwnd%, ,Left,2       
+       
+      GetSkillPosition(1, xPosition, yPosition)
+      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, ,Left,2 
+      Sleep, 500
       WriteLog("detected poison and click:" . randx . "_" . randy)
    } 
    else 
@@ -127,16 +125,13 @@ DetectEmptyPotionHP()
    if(gdipService.GdipImageSearch("img/empty_potion_hp.png"))
    {  
       gdipService.Capture("empty_potion_hp")
+   
+      GetSkillPosition(8, xPosition, yPosition)
+      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, ,Left,2 
       
-      Random, randy, 640, 680
-      Random, randx, 1210-15, 1210+15
-      
-      hwnd := gdipService.GetHwnd()
-      
-      ControlClick, x%randx% y%randy%, ahk_id %hwnd%, ,Left,2 
       WriteLog("detected all in HP Potion:" . randx . "_" . randy)
-      
-      StopAll()
+      Sleep, 500
+      gosub, ButtonStop
    }
    else
    {
@@ -149,27 +144,20 @@ DetectEmptyPotionHP()
 CreateDDLRunningProcess()
 {   
    WinGet, window_, List 
+   
    Loop, %window_%
-   {
+   {      
       WinGetTitle, processTitle,% "ahk_id" window_%A_Index%
+      WinGetClass, processClass,% "ahk_id" window_%A_Index%
+      LogWriteFile(processTitle . "_" . window_%A_Index% . "_" . processClass)
       ddlTitle.= processTitle ? processTitle "|" : ""
    }
    ;msgbox % ddlTitle
    return
 }
 
-StopAll()
-{
-  WriteLog("Pressed button 'Stop'")
-  GuiControl, enable, Start
-  GuiControl, disable, Stop
-  isStart := false
-  return
-}
-
 Fnc_Init()
 {
-   isHome := false
    return
 }
 
@@ -178,6 +166,7 @@ ButtonStart:
   WriteLog("Pressed button 'Start'")
   GuiControl, disable, Start
   GuiControl, enable, Stop
+  GuiControl, disable, WinTitle
   
   Fnc_Init()
   
@@ -188,22 +177,27 @@ ButtonStart:
       gdipService := new GdipService
       gdipService.Init()
       gdipService.SetWinTitle("NoxPlayerLin")
+      currentProcessId := gdipService.GetHwnd()
       gdipService.GetBmpHaystack()
       
-     ;Fnc_DetectPK()  
-     ;Fnc_DetectAllin()
-     DetectEmptyPotionHP()
-     DetectPoisonRock()
-     
-     gdipService.ShutDownGdipToken()
-     Sleep, 2000
+      ;Fnc_DetectPK()  
+      ;Fnc_DetectAllin()
+      DetectEmptyPotionHP()
+      DetectPoisonRock()
+
+      gdipService.ShutDownGdipToken()
+      Sleep, 2000
   }
    return  
 }
 
 ButtonStop:
 {
-  StopAll()
+  WriteLog("Pressed button 'Stop'")
+  GuiControl, enable, Start
+  GuiControl, disable, Stop
+  GuiControl, enable, WinTitle
+  isStart := false
   return
 }
 
@@ -217,26 +211,24 @@ ButtonQuit:
 DropAction:
 {
    gui, submit, nohide
-   if drop = A
-   {
-      msgbox, A
-   } else if drop = B
-   {
-      msgbox, B
-   }
+      if drop = A
+      {
+         msgbox, A
+      } else if drop = B
+      {
+         msgbox, B
+      }
    return
 }
 
 WinTitleAction:
 {
    gui, submit, nohide
-   currentProcess = %WinTitle%
-   WriteLog(currentProcess)   
+   currentProcessTitle = %WinTitle%
    
-   WinGetPos , pX, pY, , , %currentProcess%
-   procXposition = %pX%
-   procYposition = %pY%
-   ;MsgBox,  %currentProcess% position is %pX%`,%pY%
+   WinActivate, %WinTitle%
+   WriteLog("pick process : " . currentProcessTitle)   
+   ;"detected poison and click:" . randx . "_" . randy
    return 
 }
 
@@ -249,37 +241,34 @@ WinTitleAction:
 	WinGet, id, list
 	Loop, %id%
     {
-         this_id := id%A_Index%
-         WinActivate, ahk_id %this_id%
-         WinGetClass, this_class, ahk_id %this_id%
-         WinGetTitle, this_title, ahk_id %this_id%
-         ;MsgBox, 4, , Visiting All Windows`n%a_index% of %id%`nahk_id %this_id%`nahk_class %this_class%`n%this_title%`n`nContinue?
-         ;IfMsgBox, NO, break
+      this_id := id%A_Index%
+      WinActivate, ahk_id %this_id%
+      WinGetClass, this_class, ahk_id %this_id%
+      WinGetTitle, this_title, ahk_id %this_id%
+      ;MsgBox, 4, , Visiting All Windows`n%a_index% of %id%`nahk_id %this_id%`nahk_class %this_class%`n%this_title%`n`nContinue?
+      ;IfMsgBox, NO, break
     }
    Return
 }
 
 ^4::
-{
-	ID := DllCall("f", UInt,WinExist("momofriends"))
-	ID := !ID ? WinExist("momofriends") : ID
-	WinGetClass, Class, ahk_id %id%
-	WinGetTitle, Title, ahk_id %id%
-	WinActivate, ahk_id %id%
-	;MsgBox,0, %ID%, % Title "`n" Class
-	Return
+{   
+   GetSkillPosition(1, xPosition, yPosition)
+   
+   ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, ,Left,2 
+   WriteLog(currentProcessId . " : " . xPosition . "_" . yPosition)
 }
  
 ^5::
 {
-	winget,list,list,ahk_class Notepad 
-	loop,%list% 
-	{ 
-		temp:=list%A_Index% 
-		title=ahk_id %temp% 
-		controlsend,Edit1,Hello World,%title% 
-	} 
-	return
+   winget,list,list,ahk_class Notepad 
+      loop,%list% 
+      { 
+        temp:=list%A_Index% 
+        title=ahk_id %temp% 
+        controlsend,Edit1,Hello World,%title% 
+      } 
+   return
 }
 
 ^6::
@@ -294,11 +283,11 @@ WinTitleAction:
 
 F3::
 {
-	MouseGetPos, mX,mY
-	xx := A_ScreenWidth - mX
-	MsgBox, 0, 좌표위치1, x%mX% y%mY%
-	MsgBox, 0, 좌표위치2, %xx% y%mY%
-	return
+   MouseGetPos, mX,mY
+   xx := A_ScreenWidth - mX
+   MsgBox, 0, 좌표위치1, x%mX% y%mY%
+   MsgBox, 0, 좌표위치2, %xx% y%mY%
+   return
 }
 
  
@@ -334,12 +323,12 @@ F10::
 
 F12::
 {
-	WinGet, WindowList, List
-	loop %WindowList%
-	{
-		id :=  WindowList%A_Index%
-		WinGetTitle, title, ahk_id %id%
-		Msgbox %id% `n %title%
-		Return
-	}
+   WinGet, WindowList, List
+   loop %WindowList%
+   {
+     id :=  WindowList%A_Index%
+     WinGetTitle, title, ahk_id %id%
+     Msgbox %id% `n %title%
+     Return
+   }
 }
