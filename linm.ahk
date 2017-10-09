@@ -44,9 +44,14 @@ Gui, Add, Button, x245 y15 w110 h20, Quit
 GUI, Add, Picture, x365 y15 gPicProc, %A_ScriptDir%/img/ico.jpg
 Gui, Add, GroupBox, x5 y45 w380 h338, Settings
 
-Gui, Add, CheckBox, x15 y65 w210 h20 vCheckBoxPK, Detect PK
-Gui, Add, CheckBox, x15 y90 w210 h20 vCheckBoxHP, Detect HP Potion 
-Gui, Add, CheckBox, x15 y115 w210 h20 vCheckBoxPosion, Detect Poison
+Gui, Add, CheckBox, x15 y65 w200 h20 vCheckBoxPK, Detect PK
+Gui, Add, DropDownList, x220 y65 w60 h800 choose1 vDropSlotPK gDropSlotPKAction, Slot1|Slot2|Slot3|Slot4|Slot5|Slot6|Slot7|Slot8
+
+Gui, Add, CheckBox, x15 y90 w200 h20 vCheckBoxHPempty, Detect HP Potion Empty
+Gui, Add, DropDownList, x220 y90 w60 h800 choose1 vDropSlotHPempty gDropSlotHPemptyAction, Slot1|Slot2|Slot3|Slot4|Slot5|Slot6|Slot7|Slot8
+
+Gui, Add, CheckBox, x15 y115 w200 h20 vCheckBoxPoison, Detect Poison
+Gui, Add, DropDownList, x220 y115 w60 h800 choose1 vDropSlotPoison gDropSlotPoisonAction, Slot1|Slot2|Slot3|Slot4|Slot5|Slot6|Slot7|Slot8
 
 Gui, Font, cRed
 Gui, Add, Text, x15 y145, ===== Choose your process =====
@@ -374,6 +379,31 @@ WinTitleAction:
    ;WinMove, %WinTitle%, , , , , 808
    WriteLog("pick process : " . currentProcessTitle)   
    ;"detected poison and click:" . randx . "_" . randy
+   return 
+}
+
+DropSlotPKAction:
+{
+   gui, submit, nohide
+   slot = %DropSlotPK%
+   WriteLog("For PK isCheck : " . CheckBoxPK)   
+   WriteLog("For PK Slot : " . slot)   
+   return 
+}
+
+DropSlotHPemptyAction:
+{
+   gui, submit, nohide
+   WriteLog("For HP empty isCheck : " . CheckBoxHPempty)
+   WriteLog("For HP empty Slot : " . DropSlotHPempty)   
+   return 
+}
+
+DropSlotPoisonAction:
+{
+   gui, submit, nohide
+   WriteLog("For Posion isCheck : " . CheckBoxPoison)
+   WriteLog("For Posion Slot : " . DropSlotPoison)   
    return 
 }
 
