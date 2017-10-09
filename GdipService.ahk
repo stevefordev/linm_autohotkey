@@ -28,10 +28,10 @@ class GdipService {
 		LIST = 0		
 		bmpNeedle := Gdip_CreateBitmapFromFile(imagePath)				
 		RET := Gdip_ImageSearch(this.bmpHaystack,bmpNeedle,LIST,0,0,0,0,100, "0xFFFFFF" ,1,1)
-		;MsgBox % this.bmpHaystack "_" bmpNeedle "_" RET
+		;MsgBox % this.bmpHaystack "_" bmpNeedle "_" RET "_" LIST
 		Gdip_DisposeImage(bmpNeedle) 
 		
-		return List ? true : false
+		return List
 	}
 	
 	Capture(title) {
