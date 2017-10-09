@@ -1,14 +1,33 @@
 ﻿; linm automation library v1.0.2 by steve park 2017-10-09
 ;
 ;#####################################################################################
+/*
+SetFormat 커맨드 사용을 자제하세요, 속도가 느려집니다
+기본환경변수를 제거해, 혹시모를 변수간의 충돌을 방지하고 성능을 높이기 위해서 #NoEnv 을 사용하세요
+오토핫키는 자동으로 최근 실행된 코드라인을 기억합니다, ListLines, Off 로 중지하세요
+오토핫키는 자체적으로 키로그를 남깁니다, #KeyHistory 0 으로 중지하세요
+프로세스의 우선순위를 높임으로서 성능향샹을 기대할 수 있습니다, Process, Priority,, High
+Send 보다는 SendInput 을 사용하세요. 훨씬 빠르고 안정적(실행중엔 유저키입력 차단)이랍니다
+오토핫키는 기본적으로 라인마다 Sleep, 10 을 수행합니다, SetBatchLines, -1 으로 Sleep 을 제거해 속도를 높이세요
+SetWinDelay와 SetControlDelay 를 사용해 Win과 Control 관련 명령어의 속도를 높이세요
+SetKeyDelay와 SetMouseDelay 를 사용해 Send와 Mouse 관련 명령어의 속도를 높이세요
+VarSetCapacity 를 통해 사이즈가 큰 문자열변수의 메모리를 미리 설정해 속도를 높일 수 있습니다
+단순 true, false를 비교하는 if, else일 경우 Ternary Operator 를 사용하는것이 더 빠릅니다
+초기실행이후 사용되지 않을 변수는 메모리에서 제거하세요 변수명 := "" 또는 VarSetCapacity(변수명,0)
+코드의 메모리가 높아 줄이고 싶다면 대기상태의 라인에 DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1) 을 추가하세요
+[출처]: http://knowledgeisfree.tistory.com/104
+
+*/
 ;#####################################################################################
 
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 ;#Warn  ; Enable warnings to assist with detecting common errors.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+
 #SingleInstance force ; reload the old instance automatically
 #WinActivateForce
+#KeyHistory 0
 
 #Include Gdip.ahk
 #Include Gdip_ImageSearch.ahk 
@@ -128,7 +147,7 @@ Fnc_DetectPK()
 ;PK 감지
 DetectPK() 
 {
-   if (position := gdipService.GdipImageSearch("img/pk.png"))
+   if (position := gdipService.GdipImageSearch("img/pk.png", 8))
    {  
       gdipService.Capture("pk")
        
@@ -138,7 +157,7 @@ DetectPK()
          ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2
          Sleep 1000
       }
-      
+      WriteLog("detected pk position:" . position)
       WriteLog("detected pk and click:" . xPosition . "_" . yPosition)
       
       GetSlotPosition(8, xPo, yPo)
@@ -224,24 +243,25 @@ Fnc_Init()
 
 ButtonStart:
 {
-  WriteLog("Pressed button 'Start'")
-  GuiControl, disable, Start
-  GuiControl, enable, Stop
-  GuiControl, disable, WinTitle
-  
+   WriteLog("Pressed button 'Start'")
+   GuiControl, disable, Start
+   GuiControl, enable, Stop
+   GuiControl, disable, WinTitle
+
    GuiControl, enable, RandomMove
    GuiControl, enable, SlotNum1
    GuiControl, enable, SlotNum8
    GuiControl, enable, SearchQuest
    GuiControl, enable, Capture 
-   
-  Fnc_Init()
-  
-  isStart := true
-  loopCount := 0
-  While isStart=true
+
+   Fnc_Init()
+
+   isStart := true
+   loopCount := 0
+   While isStart=true
   {
-      loopCount = loopCount + 1
+      ;WriteLog("loopCount:" . loopCount)
+      loopCount += 1
       gdipService := new GdipService
       gdipService.Init()
       gdipService.SetWinTitle(currentProcessTitle)
@@ -256,11 +276,13 @@ ButtonStart:
 
       gdipService.ShutDownGdipToken()
       
-      if(loopCount = 100) 
+      if(loopCount = 50) 
       {
          GuiControl, , ListBoxLog, |
+         DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)
+         loopCount = 0
       }
-      Sleep, 2000
+      Sleep, 1000      
   }
    return  
 }
