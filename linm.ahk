@@ -224,6 +224,24 @@ DetectEmptyPotionHP()
    return
 }
 
+;HP 가 x% 이하 일때
+DetectDangerHP()
+{        
+   if(position := gdipService.GdipImageSearch("img/danger_hp.png"))
+   {  
+      gdipService.Capture("danger_hp")
+
+      WriteLog("detected danger HP")
+      Sleep, 200
+   }
+   else
+   {
+      ;WriteLog("enough potion HP")
+      Sleep, 200
+   }
+   return
+}
+
 ;현재 실행중인 프로세스 리스트를 불러와 dromdownlist 형식으로 string 생성한다
 CreateDDLRunningProcess()
 {   
@@ -270,23 +288,23 @@ ButtonStart:
       gdipService := new GdipService
       gdipService.Init()
       gdipService.SetWinTitle(currentProcessTitle)
-      gdipService.GetBmpHaystack()
+      ;gdipService.GetBmpHaystack()
       
       ;Fnc_DetectPK()  
       ;Fnc_DetectAllin()
       DetectPK()
       DetectEmptyPotionHP()
       DetectPoisonRock()
-
+      ;DetectDangerHP()
       gdipService.ShutDownGdipToken()
       
       if(loopCount = 100) 
       {
-         GuiControl, , ListBoxLog, |
-         DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)         
+         GuiControl, , ListBoxLog, |         
          loopCount = 0
       } 
       Sleep, 1000
+      DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)         
   }
    return  
 }
