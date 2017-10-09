@@ -64,6 +64,14 @@ Gui, Add, GroupBox, x390 y45 w205 h338, TEST
 Gui, Add, Button, x400 y70 w95 h20, RandomMove
 Gui, Add, Button, x400 y100 w95 h20, SlotNum1
 Gui, Add, Button, x400 y130 w95 h20, SlotNum8
+Gui, Add, Button, x400 y160 w95 h20, SearchQuest
+Gui, Add, Button, x400 y190 w95 h20, Capture
+
+GuiControl, disable, RandomMove
+GuiControl, disable, SlotNum1
+GuiControl, disable, SlotNum8
+GuiControl, disable, SearchQuest
+GuiControl, disable, Capture 
 
 Gui, Show, w600 h400, linm_v1.0.2
  
@@ -115,7 +123,7 @@ Fnc_DetectPK()
 ;PK 감지
 DetectPK() 
 {
-   if (gdipService.GdipImageSearch("img/pk.png"))
+   if (position := gdipService.GdipImageSearch("img/pk.png"))
    {  
       gdipService.Capture("pk")
        
@@ -146,7 +154,7 @@ DetectPK()
 ;석화독에 걸렸는지 체크
 DetectPoisonRock() 
 {  
-   if (gdipService.GdipImageSearch("img/poison_rock.png"))
+   if (position := gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
       ;gdipService.Capture("posion")
       
@@ -168,7 +176,7 @@ DetectPoisonRock()
 ;소지한 빨갱이 물약이 있는지 체크
 DetectEmptyPotionHP()
 {        
-   if(gdipService.GdipImageSearch("img/empty_potion_hp.png"))
+   if(position := gdipService.GdipImageSearch("img/empty_potion_hp.png"))
    {  
       ;gdipService.Capture("empty_potion_hp")
       
@@ -216,6 +224,12 @@ ButtonStart:
   GuiControl, enable, Stop
   GuiControl, disable, WinTitle
   
+   GuiControl, enable, RandomMove
+   GuiControl, enable, SlotNum1
+   GuiControl, enable, SlotNum8
+   GuiControl, enable, SearchQuest
+   GuiControl, enable, Capture 
+   
   Fnc_Init()
   
   isStart := true
@@ -248,12 +262,19 @@ ButtonStart:
 
 ButtonStop:
 {
-  WriteLog("Pressed button 'Stop'")
-  GuiControl, enable, Start
-  GuiControl, disable, Stop
-  GuiControl, enable, WinTitle
-  isStart := false
-  return
+   WriteLog("Pressed button 'Stop'")
+   GuiControl, enable, Start
+   GuiControl, disable, Stop
+   GuiControl, enable, WinTitle
+  
+   GuiControl, disable, RandomMove
+   GuiControl, disable, SlotNum1
+   GuiControl, disable, SlotNum8
+   GuiControl, disable, SearchQuest
+   GuiControl, disable, Capture 
+
+   isStart := false
+   return
 }
 
 ButtonQuit:
@@ -295,6 +316,37 @@ ButtonSlotNum8:
    ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
    
    Sleep 500
+   return
+}
+
+ButtonSearchQuest:
+{
+   if(position := gdipService.GdipImageSearch("img/btn_quest.png"))
+   {   
+      Sleep, 500
+      positionArray := StrSplit(position, ",")
+      xPosition := positionArray[1] 
+      yPosition := positionArray[2] 
+      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 1 
+      
+      WriteLog(position)
+      Sleep, 200
+   }
+   else
+   {      
+      Sleep, 500
+      gdipService.Capture("quest")
+      WriteLog("can't find quest button:" . position)
+      Sleep, 200
+   }
+   return
+}
+
+ButtonCapture:
+{
+   Sleep, 200
+   gdipService.Capture("TEST")
+   WriteLog("capture done")
    return
 }
 
