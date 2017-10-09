@@ -26,10 +26,10 @@ class GdipService {
 	
 	GdipImageSearch(imagePath = "img/pk.png", direction = 1) {
 		LIST = 0		
-		bmpNeedle := Gdip_CreateBitmapFromFile(imagePath)				
-		RET := Gdip_ImageSearch(this.bmpHaystack, bmpNeedle, LIST, 0, 0, 0, 0, 100, "0xFFFFFF" , direction, 1)
+		this.bmpNeedle := Gdip_CreateBitmapFromFile(imagePath)				
+		RET := Gdip_ImageSearch(this.bmpHaystack, this.bmpNeedle, LIST, 0, 0, 0, 0, 100, "0xFFFFFF", direction, 1)
 		;MsgBox % this.bmpHaystack "_" bmpNeedle "_" RET "_" LIST
-		Gdip_DisposeImage(bmpNeedle) 
+		Gdip_DisposeImage(this.bmpNeedle) 
 		
 		return List
 	}
@@ -47,6 +47,11 @@ class GdipService {
 	ShutDownGdip() {
 		Gdip_DisposeImage(this.bmpHaystack) 		
 		Gdip_Shutdown(this.gdipToken)
+		VarSetCapacity(this.gdipToken,0)
+		VarSetCapacity(this.hwnd,0)
+		VarSetCapacity(this.bmpHaystack,0)
+		VarSetCapacity(this.bmpNeedle,0)
+		VarSetCapacity(this.RET,0)
 		return
 	}
 }
