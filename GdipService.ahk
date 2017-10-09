@@ -42,7 +42,7 @@ class GdipService {
 		;Gdip_SetBitmapToClipboard(this.bmpHaystack)
 		this.bmpHaystack := Gdip_BitmapFromHWND(this.hwnd)
 		Gdip_SaveBitmapToFile(this.bmpHaystack, "capture/Capture_" . title . "_" . nowtime . ".png", 100)		
-		
+		Gdip_DisposeImage(this.bmpHaystack)
 		return
 	}
 	
