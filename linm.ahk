@@ -88,14 +88,16 @@ Gui, Add, GroupBox, x390 y45 w205 h338, TEST
 Gui, Add, Button, x400 y70 w95 h20, RandomMove
 Gui, Add, Button, x400 y100 w95 h20, SlotNum1
 Gui, Add, Button, x400 y130 w95 h20, SlotNum8
-Gui, Add, Button, x400 y160 w95 h20, SearchQuest
-Gui, Add, Button, x400 y190 w95 h20, Capture
+Gui, Add, Button, x400 y160 w95 h20, Capture
+Gui, Add, Button, x400 y190 w95 h20, SearchQuest
+Gui, Add, Button, x400 y220 w95 h20, SearchInven
 
 GuiControl, disable, RandomMove
 GuiControl, disable, SlotNum1
 GuiControl, disable, SlotNum8
-GuiControl, disable, SearchQuest
 GuiControl, disable, Capture 
+GuiControl, disable, SearchQuest
+GuiControl, disable, SearchInven
 
 Gui, Show, w600 h400, linm_v1.0.2
  
@@ -149,19 +151,22 @@ DetectPK()
 {
    if (position := gdipService.GdipImageSearch("img/pk.png", 8))
    {  
+      WriteLog("detected pk !!!!!!!!!!!!!!!!!")
+      
       gdipService.Capture("pk")
        
       GetDirection(xPosition, yPosition)   
       loop 5
       {   
-         ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2
+         ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 3
+         WriteLog("detected pk and click:" . xPosition . "_" . yPosition)
          Sleep 1000
       }
       WriteLog("detected pk position:" . position)
-      WriteLog("detected pk and click:" . xPosition . "_" . yPosition)
+      
       
       GetSlotPosition(8, xPo, yPo)
-      ControlClick, x%xPo% y%yPo%, ahk_id %currentProcessId%, , Left, 2 
+      ControlClick, x%xPo% y%yPo%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected pk and go home:" . xPo . "_" . yPo)
       Sleep, 200
@@ -181,10 +186,9 @@ DetectPoisonRock()
    if (position := gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
       ;gdipService.Capture("posion")
-      
       Sleep, 2000      
       GetSlotPosition(1, xPosition, yPosition)
-      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2 
+      ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected poison : click " . xPosition . "_" . yPosition)
    } 
@@ -206,7 +210,7 @@ DetectEmptyPotionHP()
       
       Sleep, 2000      
       GetSlotPosition(8, xPosition, yPosition)
-      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 2 
+      ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected allin HP potion : click" . xPosition . "_" . yPosition)
       Sleep, 200
@@ -250,9 +254,10 @@ ButtonStart:
 
    GuiControl, enable, RandomMove
    GuiControl, enable, SlotNum1
-   GuiControl, enable, SlotNum8
-   GuiControl, enable, SearchQuest
+   GuiControl, enable, SlotNum8   
    GuiControl, enable, Capture 
+   GuiControl, enable, SearchQuest
+   GuiControl, enable, SearchInven
 
    Fnc_Init()
 
@@ -265,7 +270,6 @@ ButtonStart:
       gdipService := new GdipService
       gdipService.Init()
       gdipService.SetWinTitle(currentProcessTitle)
-      currentProcessId := gdipService.GetHwnd()
       gdipService.GetBmpHaystack()
       
       ;Fnc_DetectPK()  
@@ -276,13 +280,13 @@ ButtonStart:
 
       gdipService.ShutDownGdipToken()
       
-      if(loopCount = 50) 
+      if(loopCount = 100) 
       {
          GuiControl, , ListBoxLog, |
-         DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)
+         DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)         
          loopCount = 0
-      }
-      Sleep, 1000      
+      } 
+      Sleep, 1000
   }
    return  
 }
@@ -297,8 +301,9 @@ ButtonStop:
    GuiControl, disable, RandomMove
    GuiControl, disable, SlotNum1
    GuiControl, disable, SlotNum8
-   GuiControl, disable, SearchQuest
    GuiControl, disable, Capture 
+   GuiControl, disable, SearchQuest
+   GuiControl, disable, SearchInven
 
    isStart := false
    return
@@ -329,7 +334,7 @@ ButtonSlotNum1:
    Sleep 500
    
    GetSlotPosition(1, xPosition, yPosition)
-   ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
+   ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 1
    
    Sleep 500
    return
@@ -340,7 +345,7 @@ ButtonSlotNum8:
    Sleep 500
    
    GetSlotPosition(8, xPosition, yPosition)
-   ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
+   ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 1
    
    Sleep 500
    return
@@ -348,13 +353,36 @@ ButtonSlotNum8:
 
 ButtonSearchQuest:
 {
-   if(position := gdipService.GdipImageSearch("img/btn_quest.png"))
+   if(position := gdipService.GdipImageSearch("img/btn_quest.png",8))
    {   
       Sleep, 500
       positionArray := StrSplit(position, ",")
       xPosition := positionArray[1] 
-      yPosition := positionArray[2] 
-      ControlClick, x%xPosition% y%yPosition%, ahk_id %currentProcessId%, , Left, 1 
+      yPosition := positionArray[2] + 20
+      ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , left, 1
+      
+      WriteLog(position)
+      Sleep, 200
+   }
+   else
+   {      
+      Sleep, 500
+      gdipService.Capture("quest")
+      WriteLog("can't find quest button:" . position)
+      Sleep, 200
+   }
+   return
+}
+
+ButtonSearchInven:
+{
+   if(position := gdipService.GdipImageSearch("img/btn_inven.png",8))
+   {   
+      Sleep, 500
+      positionArray := StrSplit(position, ",")
+      xPosition := positionArray[1] 
+      yPosition := positionArray[2] + 20
+      ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , left, 1
       
       WriteLog(position)
       Sleep, 200
