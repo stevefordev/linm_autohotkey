@@ -1,4 +1,4 @@
-﻿; linm automation library v1.0.2 by steve park 2017-10-08
+﻿; linm automation library v1.0.2 by steve park 2017-10-09
 ;
 ;#####################################################################################
 ;#####################################################################################
@@ -327,7 +327,7 @@ WinTitleAction:
 
 PicProc:
 {
-   Run, https://github.com/stevefordev/linm_autohotkey
+   Run, https://stevefordev.github.io/linm_autohotkey/
    WriteLog("PicProc")   
    return
 }
