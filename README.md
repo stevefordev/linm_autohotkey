@@ -32,3 +32,7 @@ Todo list
 * 비활성 모드에서 키보드 자판 입력(w,a,s,d) 추가 (현재 블루스택만 가능(controlsend))
 * 어플 실행시 기존 로그 백업
 * 설정 저장 및 로드
+
+Snapshot
+-------------
+![alt text](https://raw.githubusercontent.com/stevefordev/linm_autohotkey/master/linm.png)
