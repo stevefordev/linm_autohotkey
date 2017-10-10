@@ -63,14 +63,14 @@ Gui, Add, Button, x245 y15 w110 h20, Quit
 GUI, Add, Picture, x365 y15 gPicProc, %A_ScriptDir%/img/ico.jpg
 Gui, Add, GroupBox, x5 y45 w380 h338, Settings
 
-Gui, Add, CheckBox, x15 y65 w200 h20 vCheckBoxPK, Detect PK
-Gui, Add, DropDownList, x220 y65 w60 h800 choose1 vDropSlotPK gDropSlotPKAction, Slot1|Slot2|Slot3|Slot4|Slot5|Slot6|Slot7|Slot8
+Gui, Add, CheckBox, x15 y65 w200 h20 vCheckBoxPK gCheckBoxPKAction, Detect PK
+Gui, Add, DropDownList, x220 y65 w60 h800 choose1 vDropSlotPK gDropSlotPKAction, Slot-1|Slot-2|Slot-3|Slot-4|Slot-5|Slot-6|Slot-7|Slot-8
 
-Gui, Add, CheckBox, x15 y90 w200 h20 vCheckBoxHPempty, Detect HP Potion Empty
-Gui, Add, DropDownList, x220 y90 w60 h800 choose1 vDropSlotHPempty gDropSlotHPemptyAction, Slot1|Slot2|Slot3|Slot4|Slot5|Slot6|Slot7|Slot8
+Gui, Add, CheckBox, x15 y90 w200 h20 vCheckBoxPotionHPempty gCheckBoxPotionHPemptyAction, Detect HP Potion Empty
+Gui, Add, DropDownList, x220 y90 w60 h800 choose1 vDropSlotPotionHPempty gDropSlotPotionHPemptyAction, Slot-1|Slot-2|Slot-3|Slot-4|Slot-5|Slot-6|Slot-7|Slot-8
 
-Gui, Add, CheckBox, x15 y115 w200 h20 vCheckBoxPoison, Detect Poison
-Gui, Add, DropDownList, x220 y115 w60 h800 choose1 vDropSlotPoison gDropSlotPoisonAction, Slot1|Slot2|Slot3|Slot4|Slot5|Slot6|Slot7|Slot8
+Gui, Add, CheckBox, x15 y115 w200 h20 vCheckBoxPoisonRock gCheckBoxPoisonRockAction, Detect Poison
+Gui, Add, DropDownList, x220 y115 w60 h800 choose1 vDropSlotPoisonRock gDropSlotPoisonRockAction, Slot-1|Slot-2|Slot-3|Slot-4|Slot-5|Slot-6|Slot-7|Slot-8
 
 Gui, Font, cRed
 Gui, Add, Text, x15 y145, ===== Choose your process =====
@@ -162,10 +162,15 @@ DetectPK()
          WriteLog("detected pk and click:" . xPosition . "_" . yPosition)
          Sleep 1000
       }
+      
       WriteLog("detected pk position:" . position)
       
+      GuiControlGet, DropSlotPK
+      values := StrSplit(DropSlotPK, "-")
+      slotNum := values[2]
+      WriteLog("slot:" . slotNum)
       
-      GetSlotPosition(8, xPo, yPo)
+      GetSlotPosition(slotNum, xPo, yPo)
       ControlClick, x%xPo% y%yPo%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected pk and go home:" . xPo . "_" . yPo)
@@ -185,9 +190,13 @@ DetectPoisonRock()
 {  
    if (position := gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
-      ;gdipService.Capture("posion")
+      ;gdipService.Capture("poison")
       Sleep, 2000      
-      GetSlotPosition(1, xPosition, yPosition)
+      GuiControlGet, DropSlotPoisonRock
+      values := StrSplit(DropSlotPoisonRock, "-")
+      slotNum := values[2]
+      WriteLog("slot:" . slotNum)
+      GetSlotPosition(slotNum, xPosition, yPosition)
       ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected poison : click " . xPosition . "_" . yPosition)
@@ -202,14 +211,18 @@ DetectPoisonRock()
 }
 
 ;소지한 빨갱이 물약이 있는지 체크
-DetectEmptyPotionHP()
+DetectPotionHPempty()
 {        
    if(position := gdipService.GdipImageSearch("img/empty_potion_hp.png"))
-   {  
+   {
       ;gdipService.Capture("empty_potion_hp")
       
-      Sleep, 2000      
-      GetSlotPosition(8, xPosition, yPosition)
+      Sleep, 2000
+      GuiControlGet, DropSlotPotionHPempty
+      values := StrSplit(DropSlotPotionHPempty, "-")
+      slotNum := values[2]
+      WriteLog("slot:" . slotNum)
+      GetSlotPosition(slotNum, xPosition, yPosition)
       ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected allin HP potion : click" . xPosition . "_" . yPosition)
@@ -265,6 +278,8 @@ Fnc_Init()
 
 ButtonStart:
 {
+   gui, submit, nohide
+   
    WriteLog("Pressed button 'Start'")
    GuiControl, disable, Start
    GuiControl, enable, Stop
@@ -292,9 +307,23 @@ ButtonStart:
       
       ;Fnc_DetectPK()  
       ;Fnc_DetectAllin()
-      DetectPK()
-      DetectEmptyPotionHP()
-      DetectPoisonRock()
+      WriteLog("==================== " . loopCount)
+      
+      if (CheckBoxPK)
+      {
+         DetectPK()
+      }
+      
+      if (CheckBoxPotionHPempty)
+      {
+         DetectPotionHPempty()
+      }
+      
+      if (CheckBoxPoisonRock)
+      {
+         DetectPoisonRock()
+      }
+      
       ;DetectDangerHP()
       gdipService.ShutDownGdipToken()
       
@@ -453,26 +482,43 @@ WinTitleAction:
 DropSlotPKAction:
 {
    gui, submit, nohide
-   slot = %DropSlotPK%
-   WriteLog("For PK isCheck : " . CheckBoxPK)   
-   WriteLog("For PK Slot : " . slot)   
+   WriteLog("For PK Slot : " . DropSlotPK)
    return 
 }
 
-DropSlotHPemptyAction:
+DropSlotPotionHPemptyAction:
 {
    gui, submit, nohide
-   WriteLog("For HP empty isCheck : " . CheckBoxHPempty)
-   WriteLog("For HP empty Slot : " . DropSlotHPempty)   
+   WriteLog("For HP empty Slot : " . DropSlotPotionHPempty)   
    return 
 }
 
-DropSlotPoisonAction:
+DropSlotPoisonRockAction:
 {
    gui, submit, nohide
-   WriteLog("For Posion isCheck : " . CheckBoxPoison)
-   WriteLog("For Posion Slot : " . DropSlotPoison)   
+   WriteLog("For Poison Slot : " . DropSlotPoisonRock)   
    return 
+}
+
+CheckBoxPKAction:
+{
+   gui, submit, nohide
+   WriteLog("For PK isCheck : " . CheckBoxPK) 
+   return
+}
+
+CheckBoxPotionHPemptyAction:
+{
+   gui, submit, nohide
+   WriteLog("For HP potion empty isCheck : " . CheckBoxPotionHPempty) 
+   return
+}
+
+CheckBoxPoisonRockAction:
+{
+   gui, submit, nohide
+   WriteLog("For PK isCheck : " . CheckBoxPoisonRock)
+   return
 }
 
 PicProc:
