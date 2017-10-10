@@ -1,4 +1,4 @@
-﻿; linm automation library v1.0.2 by steve park 2017-10-09
+﻿; linm automation library v1.0.3 by steve park 2017-10-10
 ;
 ;#####################################################################################
 /*
@@ -99,7 +99,7 @@ GuiControl, disable, Capture
 GuiControl, disable, SearchQuest
 GuiControl, disable, SearchInven
 
-Gui, Show, w600 h400, linm_v1.0.2
+Gui, Show, w600 h400, linm_v1.0.3
  
 return
 
