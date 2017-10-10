@@ -28,7 +28,8 @@ class GdipService {
 		LIST = 0		
 		this.bmpHaystack := Gdip_BitmapFromHWND(this.hwnd)
 		this.bmpNeedle := Gdip_CreateBitmapFromFile(imagePath)				
-		RET := Gdip_ImageSearch(this.bmpHaystack, this.bmpNeedle, LIST, 0, 0, 0, 0, 100, "0xFFFFFF", direction, 1)
+		;RET := Gdip_ImageSearch(this.bmpHaystack, this.bmpNeedle, LIST, 0, 0, 0, 0, 100, "0xFFFFFF", direction, 1)
+		RET := Gdip_ImageSearch(this.bmpHaystack, this.bmpNeedle, LIST, 0, 0, 0, 0, 100, , direction, 1)
 		;MsgBox % this.bmpHaystack "_" bmpNeedle "_" RET "_" LIST
 		Gdip_DisposeImage(this.bmpNeedle) 
 		Gdip_DisposeImage(this.bmpHaystack)
