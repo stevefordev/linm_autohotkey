@@ -191,7 +191,7 @@ DetectPoisonRock()
    if (position := gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
       ;gdipService.Capture("poison")
-      Sleep, 2000      
+      Sleep, 500      
       GuiControlGet, DropSlotPoisonRock
       values := StrSplit(DropSlotPoisonRock, "-")
       slotNum := values[2]
