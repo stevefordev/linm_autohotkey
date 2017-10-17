@@ -65,9 +65,11 @@ Gui, Add, GroupBox, x5 y45 w380 h338, Settings
 
 Gui, Add, CheckBox, x15 y65 w200 h20 vCheckBoxPK gCheckBoxPKAction, Detect PK
 Gui, Add, DropDownList, x220 y65 w60 h800 choose1 vDropSlotPK gDropSlotPKAction, Slot-1|Slot-2|Slot-3|Slot-4|Slot-5|Slot-6|Slot-7|Slot-8
+Gui, Add, CheckBox, x300 y65 w60 h20 vCheckBoxPKQuit gCheckBoxPKQuitAction, Quit
 
 Gui, Add, CheckBox, x15 y90 w200 h20 vCheckBoxPotionHPempty gCheckBoxPotionHPemptyAction, Detect HP Potion Empty
 Gui, Add, DropDownList, x220 y90 w60 h800 choose1 vDropSlotPotionHPempty gDropSlotPotionHPemptyAction, Slot-1|Slot-2|Slot-3|Slot-4|Slot-5|Slot-6|Slot-7|Slot-8
+Gui, Add, CheckBox, x300 y90 w60 h20 vCheckBoxPotionHPemptyQuit gCheckBoxPotionHPemptyQuitAction, Quit
 
 Gui, Add, CheckBox, x15 y115 w200 h20 vCheckBoxPoisonRock gCheckBoxPoisonRockAction, Detect Poison
 Gui, Add, DropDownList, x220 y115 w60 h800 choose1 vDropSlotPoisonRock gDropSlotPoisonRockAction, Slot-1|Slot-2|Slot-3|Slot-4|Slot-5|Slot-6|Slot-7|Slot-8
@@ -85,12 +87,13 @@ GuiControl, Font, TextColorBlack
 Gui, Add, ListBox, x15 y225 w360 h148 vListBoxLog
 
 Gui, Add, GroupBox, x390 y45 w205 h338, TEST
-Gui, Add, Button, x400 y70 w95 h20, RandomMove
-Gui, Add, Button, x400 y100 w95 h20, SlotNum1
-Gui, Add, Button, x400 y130 w95 h20, SlotNum8
-Gui, Add, Button, x400 y160 w95 h20, Capture
-Gui, Add, Button, x400 y190 w95 h20, SearchQuest
-Gui, Add, Button, x400 y220 w95 h20, SearchInven
+Gui, Add, Button, x400 y70 w90 h20, RandomMove
+Gui, Add, Button, x496 y70 w90 h20, OpenDir
+Gui, Add, Button, x400 y100 w90 h20, SlotNum1
+Gui, Add, Button, x400 y130 w90 h20, SlotNum8
+Gui, Add, Button, x400 y160 w90 h20, Capture
+Gui, Add, Button, x400 y190 w90 h20, SearchQuest
+Gui, Add, Button, x400 y220 w90 h20, SearchInven
 
 GuiControl, disable, RandomMove
 GuiControl, disable, SlotNum1
@@ -99,7 +102,9 @@ GuiControl, disable, Capture
 GuiControl, disable, SearchQuest
 GuiControl, disable, SearchInven
 
-Gui, Show, w600 h400, linm_v1.0.3
+Global application := "linm_v1.0.4"
+
+Gui, Show, w600 h400, %application%
  
 return
 
@@ -175,7 +180,12 @@ DetectPK()
       
       WriteLog("detected pk and go home:" . xPo . "_" . yPo)
       Sleep, 200
-      gosub, ButtonStop
+      
+      GuiControlGet, CheckBoxPKQuit
+      
+      if (CheckBoxPKQuit) {
+         gosub, ButtonStop
+      }
    } 
    else 
    {
@@ -191,7 +201,7 @@ DetectPoisonRock()
    if (position := gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
       ;gdipService.Capture("poison")
-      Sleep, 500      
+      Sleep, 200      
       GuiControlGet, DropSlotPoisonRock
       values := StrSplit(DropSlotPoisonRock, "-")
       slotNum := values[2]
@@ -200,6 +210,7 @@ DetectPoisonRock()
       ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected poison : click " . xPosition . "_" . yPosition)
+      Sleep, 200
    } 
    else 
    {
@@ -226,8 +237,14 @@ DetectPotionHPempty()
       ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       
       WriteLog("detected allin HP potion : click" . xPosition . "_" . yPosition)
+      
       Sleep, 200
-      gosub, ButtonStop
+      
+      GuiControlGet, CheckBoxPotionHPemptyQuit
+
+      if (CheckBoxPotionHPemptyQuit) {
+         gosub, ButtonStop
+      }
    }
    else
    {
@@ -276,6 +293,26 @@ Fnc_Init()
    return
 }
 
+CleanMemory(PID)  ;Written with help from "Temp01" on the AHK IRC chat (thank you again, temp01!!!)
+{
+   Process, Exist  ;Sets ErrorLevel to the PID of this running script
+   h := DllCall("OpenProcess", "UInt", 0x0400, "Int", false, "UInt", ErrorLevel)  ;Get the handle of this script with PROCESS_QUERY_INFORMATION (0x0400)
+   DllCall("Advapi32.dll\OpenProcessToken", "UInt", h, "UInt", 32, "UIntP", t)  ;Open an adjustable access token with this process (TOKEN_ADJUST_PRIVILEGES = 32)
+   VarSetCapacity(ti, 16, 0)  ;Structure of privileges
+   NumPut(1, ti, 0)  ;One entry in the privileges array...
+   DllCall("Advapi32.dll\LookupPrivilegeValueA", "UInt", 0, "Str", "SeDebugPrivilege", "Int64P", luid)  ;Retrieves the locally unique identifier of the debug privilege:
+   NumPut(luid, ti, 4, "int64")
+   NumPut(2, ti, 12)  ;Enable this privilege: SE_PRIVILEGE_ENABLED = 2
+   DllCall("Advapi32.dll\AdjustTokenPrivileges", "UInt", t, "Int", false, "UInt", &ti, "UInt", 0, "UInt", 0, "UInt", 0)  ;Update the privileges of this process with the new access token:
+   DllCall("CloseHandle", "UInt", h)  ;Close this process handle to save memory
+   hModule := DllCall("LoadLibrary", "Str", "Psapi.dll")  ;Increase performance by preloading the libaray
+   h := DllCall("OpenProcess", "UInt", 0x400|0x100, "Int", false, "UInt", pid)  ;Open process with: PROCESS_QUERY_INFORMATION (0x0400) | PROCESS_SET_QUOTA (0x100)
+   e := DllCall("psapi.dll\EmptyWorkingSet", "UInt", h)
+   DllCall("CloseHandle", "UInt", h)  ;Close process handle to save memory
+   DllCall("FreeLibrary", "UInt", hModule)  ;Unload the library to free memory
+   Return e
+}
+
 ButtonStart:
 {
    gui, submit, nohide
@@ -292,49 +329,58 @@ ButtonStart:
    GuiControl, enable, SearchQuest
    GuiControl, enable, SearchInven
 
+   Winget, Value, Pid, %application%
+   
    Fnc_Init()
 
    isStart := true
    loopCount := 0
    While isStart=true
-  {
-      ;WriteLog("loopCount:" . loopCount)
-      loopCount += 1
-      gdipService := new GdipService
-      gdipService.Init()
-      gdipService.SetWinTitle(currentProcessTitle)
-      ;gdipService.GetBmpHaystack()
-      
-      ;Fnc_DetectPK()  
-      ;Fnc_DetectAllin()
-      WriteLog("==================== " . loopCount)
-      
-      if (CheckBoxPK)
+   {
+      try
       {
-         DetectPK()
+         ;WriteLog("loopCount:" . loopCount)
+         loopCount += 1
+         gdipService := new GdipService
+         gdipService.Init()
+         gdipService.SetWinTitle(currentProcessTitle)
+         ;gdipService.GetBmpHaystack()
+         
+         ;Fnc_DetectPK()  
+         ;Fnc_DetectAllin()
+         WriteLog("==================== " . loopCount)
+         
+         if (CheckBoxPK)
+         {
+            DetectPK()
+         }
+         
+         if (CheckBoxPotionHPempty)
+         {
+            DetectPotionHPempty()
+         }
+         
+         if (CheckBoxPoisonRock)
+         {
+            DetectPoisonRock()
+         }
+         
+         ;DetectDangerHP()
+         gdipService.ShutDownGdipToken()
+         
+         if(loopCount = 1000) 
+         {
+            GuiControl, , ListBoxLog, |         
+            loopCount = 0
+            ;CleanMemory(Pid)
+         } 
+         
+         Sleep, 50
+         ;DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)                  
+      } catch e {
+         WriteLog("Error:" . e)
       }
-      
-      if (CheckBoxPotionHPempty)
-      {
-         DetectPotionHPempty()
-      }
-      
-      if (CheckBoxPoisonRock)
-      {
-         DetectPoisonRock()
-      }
-      
-      ;DetectDangerHP()
-      gdipService.ShutDownGdipToken()
-      
-      if(loopCount = 100) 
-      {
-         GuiControl, , ListBoxLog, |         
-         loopCount = 0
-      } 
-      Sleep, 1000
-      DllCall("psapi.dll\EmptyWorkingSet", "Ptr", -1)         
-  }
+   }   
    return  
 }
 
@@ -352,13 +398,18 @@ ButtonStop:
    GuiControl, disable, SearchQuest
    GuiControl, disable, SearchInven
 
+   gdipService.ShutDownGdipToken()
    isStart := false
+   Sleep, 1000
    return
 }
 
 ButtonQuit:
 {
   WriteLog("Pressed button 'Quit'")
+  
+  gdipService.ShutDownGdipToken()
+  Sleep, 1000
   ExitApp
   return
 }
@@ -371,6 +422,14 @@ ButtonRandomMove:
       ControlClick, x%xPosition% y%yPosition%, %currentProcessTitle%, , Left, 2 
       Sleep 1000
    }
+   
+   Sleep 500
+   return
+}
+
+ButtonOpenDir:
+{
+   Run, Explorer %A_ScriptDir%
    
    Sleep 500
    return
@@ -507,10 +566,24 @@ CheckBoxPKAction:
    return
 }
 
+CheckBoxPKQuitAction:
+{
+   gui, submit, nohide
+   WriteLog("Quit For PK isCheck : " . CheckBoxPKQuit) 
+   return
+}
+
 CheckBoxPotionHPemptyAction:
 {
    gui, submit, nohide
    WriteLog("For HP potion empty isCheck : " . CheckBoxPotionHPempty) 
+   return
+}
+
+CheckBoxPotionHPemptyQuitAction:
+{
+   gui, submit, nohide
+   WriteLog("Quit For HP potion empty isCheck : " . CheckBoxPotionHPemptyQuit) 
    return
 }
 
@@ -534,7 +607,8 @@ PicProc:
 ;###########################################################################################
 ^1::
 {
-   GuiControl, , ListBoxLog, |
+   ;GuiControl, , ListBoxLog, |
+   Run, Explorer %A_ScriptDir%
    return
 }
 
