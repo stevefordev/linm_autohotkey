@@ -25,6 +25,9 @@ VarSetCapacity 를 통해 사이즈가 큰 문자열변수의 메모리를 미�
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
+#MaxMem 256
+#MaxThreads 2
+
 #SingleInstance force ; reload the old instance automatically
 #WinActivateForce
 #KeyHistory 0
@@ -121,7 +124,6 @@ LogShow(logData) {
 	formattime, nowtime,,yyyy-MM-dd HH:mm:ss
 	guicontrol, , ListBoxLog, [%nowtime%]  %logData% . ||
     
-    
     return
 }
 
@@ -152,7 +154,7 @@ Fnc_DetectPK()
 }
 
 ;PK 감지
-DetectPK() 
+DetectPK:
 {
    if (position := gdipService.GdipImageSearch("img/pk.png", 8))
    {  
@@ -196,7 +198,7 @@ DetectPK()
 }
 
 ;석화독에 걸렸는지 체크
-DetectPoisonRock() 
+DetectPoisonRock:
 {  
    if (position := gdipService.GdipImageSearch("img/poison_rock.png"))
    {  
@@ -222,7 +224,7 @@ DetectPoisonRock()
 }
 
 ;소지한 빨갱이 물약이 있는지 체크
-DetectPotionHPempty()
+DetectPotionHPempty:
 {        
    if(position := gdipService.GdipImageSearch("img/empty_potion_hp.png"))
    {
@@ -255,7 +257,7 @@ DetectPotionHPempty()
 }
 
 ;HP 가 x% 이하 일때
-DetectDangerHP()
+DetectDangerHP:
 {        
    if(position := gdipService.GdipImageSearch("img/danger_hp.png"))
    {  
@@ -285,11 +287,6 @@ CreateDDLRunningProcess()
       ddlTitle.= processTitle ? processTitle "|" : ""
    }
    ;msgbox % ddlTitle
-   return
-}
-
-Fnc_Init()
-{
    return
 }
 
@@ -331,19 +328,19 @@ ButtonStart:
 
    Winget, Value, Pid, %application%
    
-   Fnc_Init()
-
    isStart := true
    loopCount := 0
+   
+   gdipService := new GdipService
+   gdipService.SetWinTitle(currentProcessTitle)
+   
    While isStart=true
    {
       try
       {
          ;WriteLog("loopCount:" . loopCount)
          loopCount += 1
-         gdipService := new GdipService
-         gdipService.Init()
-         gdipService.SetWinTitle(currentProcessTitle)
+         
          ;gdipService.GetBmpHaystack()
          
          ;Fnc_DetectPK()  
@@ -351,22 +348,21 @@ ButtonStart:
          WriteLog("==================== " . loopCount)
          
          if (CheckBoxPK)
-         {
-            DetectPK()
+         {            
+            gosub, DetectPK
          }
          
          if (CheckBoxPotionHPempty)
          {
-            DetectPotionHPempty()
+            gosub, DetectPotionHPempty
          }
          
          if (CheckBoxPoisonRock)
          {
-            DetectPoisonRock()
+            gosub, DetectPoisonRock
          }
          
          ;DetectDangerHP()
-         gdipService.ShutDownGdipToken()
          
          if(loopCount = 1000) 
          {
