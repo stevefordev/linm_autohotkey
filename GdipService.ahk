@@ -1,5 +1,5 @@
 class GdipService {
-	Init() {
+	SetToken() {
 		If !this.gdipToken := Gdip_Startup()
 		{
 			MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
@@ -25,6 +25,8 @@ class GdipService {
 	}
 	
 	GdipImageSearch(imagePath = "img/pk.png", direction = 1) {
+		this.SetToken()
+		
 		LIST = 0		
 		this.bmpHaystack := Gdip_BitmapFromHWND(this.hwnd)
 		this.bmpNeedle := Gdip_CreateBitmapFromFile(imagePath)				
@@ -33,6 +35,9 @@ class GdipService {
 		;MsgBox % this.bmpHaystack "_" bmpNeedle "_" RET "_" LIST
 		Gdip_DisposeImage(this.bmpNeedle) 
 		Gdip_DisposeImage(this.bmpHaystack)
+		
+		this.ShutDownGdip()
+		
 		return List
 	}
 	
