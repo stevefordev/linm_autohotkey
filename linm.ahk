@@ -1,4 +1,4 @@
-﻿; linm automation library v1.0.3 by steve park 2017-10-10
+﻿; linm automation library v1.0.5 by steve park 2017-10-27
 ;
 ;#####################################################################################
 /*
@@ -98,6 +98,7 @@ Gui, Add, Button, x400 y160 w90 h20, Capture
 Gui, Add, Button, x400 y190 w90 h20, SearchQuest
 Gui, Add, Button, x400 y220 w90 h20, SearchInven
 
+GuiControl, disable, Stop
 GuiControl, disable, RandomMove
 GuiControl, disable, SlotNum1
 GuiControl, disable, SlotNum8
@@ -105,7 +106,7 @@ GuiControl, disable, Capture
 GuiControl, disable, SearchQuest
 GuiControl, disable, SearchInven
 
-Global application := "linm_v1.0.4"
+Global application := "linm_v1.0.5"
 
 Gui, Show, w600 h400, %application%
  
@@ -394,7 +395,7 @@ ButtonStop:
    GuiControl, disable, SearchQuest
    GuiControl, disable, SearchInven
 
-   gdipService.ShutDownGdipToken()
+   ;gdipService.ShutDownGdipToken()
    isStart := false
    Sleep, 1000
    return
@@ -404,8 +405,9 @@ ButtonQuit:
 {
   WriteLog("Pressed button 'Quit'")
   
-  gdipService.ShutDownGdipToken()
-  Sleep, 1000
+  gosub, ButtonStop
+  ;gdipService.ShutDownGdipToken()
+  Sleep, 500
   ExitApp
   return
 }
