@@ -1,5 +1,6 @@
 리니지M 매크로(오토핫키)
 =============
+><img src="https://raw.githubusercontent.com/stevefordev/linm_autohotkey/master/linm.png" width="200">
 
 Features
 -------------
